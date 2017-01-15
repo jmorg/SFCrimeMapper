@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+	<title>Golden Gate Crime Mapper</title>
+	<link rel="stylesheet" type="text/css" href="main.css">
+
+	<!-- OPEN SOURCE FONT -->	
+	<link rel="stylesheet" media="screen" href="https://fontlibrary.org/face/arco-perpetuo" type="text/css"/>
+	
+	<!-- JQUERY STUFF -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+	<link href='http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css' rel='stylesheet' type='text/css'>
+
+	<!-- MULTI SELECT STUFF -->
+	<script src="multiple-select-master/multiple-select.js"></script>
+	<link href="multiple-select-master/multiple-select.css" rel="stylesheet"/>
+
+	<!-- DATE/TIMEPICKER STUFF -->
+	<script type="text/javascript" src="datepair-master/dist/datepair.js"></script>
+	<script type="text/javascript" src="datepair-master/dist/jquery.datepair.js"></script>
+	<script src="jquery-timepicker-master/jquery.timepicker.js"></script>
+	<link href="jquery-timepicker-master/jquery.timepicker.css" rel="stylesheet"/>
+
+</head>
+<body>
+	<!--
+	<div id="header">
+		<img src="logo_v2.png" alt="Logo" height="100%">
+	</div> 
+	-->
+	<div id="page-wrap">
+	
+			<div id="left-sidebar">
+				<div id="logo"><img src="logo.png" alt="Logo" width="400px"></div>
+				<div id="left-sidebar-inner">
+					<h2>Filter Settings</h2>
+
+					<!-- Radius A -->
+					<div id="filter">
+						<h3>Radius Around <span style="color: #3399FF">Location A</span> &nbsp;<div id="circleA" class="circle"></div></h3>
+						<div class="slider"  id="sliderA"></div>
+						<div class="slider-text">
+							<input type="text" class="sliderValue" id="sliderA-radius" value=2.5 /> mi
+						</div>
+
+						<script type="text/javascript">
+						var sliderARadius = 2.5;
+						$(document).ready(function() {
+							var sliderAMax = 8;
+							$("#sliderA").slider({
+								range: "min",
+								value: 2.5,
+								step:0.01,
+								min: 0.01,
+								max: sliderAMax,
+								slide: function(event, ui) {
+									$("#sliderA-radius").val(ui.value);
+									sliderARadius = ui.value;
+									updateRadii();
+									query();
+								}
+							});
+
+							$("#sliderA-radius").change(function() {					   	
+								var valueA = this.value;
+								if (valueA > sliderAMax) {
+									valueA = sliderAMax;
+									$("#sliderA-radius").val(sliderAMax);
+								}
+								if (valueA < 0.01) {
+									valueA = 0.01;
+									$("#sliderA-radius").val(0.01);
+								}
+								$("#sliderA").slider("value", parseInt(valueA));
+								sliderARadius = valueA;
+								updateRadii();
+								query();
+							});
+							$('.ui-widget-header').css('background','#BEBEC0');
+						});
+						</script>
+						<!-- https://jqueryui.com/slider/ -->
+						
+					</div>
+
+
+					<!-- Radius B -->
+					<div id="filter">
+						<h3>Radius Around <span style="color: #FF6600">Location B</span> &nbsp;<div id="circleB" class="circle"></div></h3>
+						<div class="slider" id="sliderB"></div>
+						<div class="slider-text">
+							<input type="text" class="sliderValue" id="sliderB-radius" value=2.5 /> mi
+						</div>
+
+						<script type="text/javascript">
+						var sliderBRadius = 2.5;						
+						$(document).ready(function() {
+							var sliderBMax = 8;
+							$("#sliderB").slider({
+								range: "min",
+								value: 2.5,
+								step:0.01,
+								min: 0.01,
+								max: sliderBMax,
+								slide: function(event, ui) {
+									$("#sliderB-radius").val(ui.value);
+									sliderBRadius = ui.value;
+									updateRadii();
+									query();
+								}
+							});
+
+							$("#sliderB-radius").change(function() {					   	
+								var valueB = this.value;
+								if (valueB > sliderBMax) {
+									valueB = sliderBMax;
+									$("#sliderB-radius").val(sliderBMax);
+								}
+								if (valueB < 0.01) {
+									valueB = 0.01;
+									$("#sliderB-radius").val(0.01);
+								}
+								$("#sliderB").slider("value", parseInt(valueB));
+								sliderBRadius = valueB;
+								updateRadii();
+								query();
+							});
+							$('.ui-widget-header').css('background','#BEBEC0');
+						});
+						</script>
+						<!-- https://jqueryui.com/slider/ -->
+					</div>
+
+
+					<!-- Category -->
+					<div id="filter">
+						<h3>Category of Crime</h3>
+						<select multiple="multiple" id="category">
+							<option value="1">Personal/Violent</option>
+							<option value="2">Property</option>
+							<option value="3">White-Collar/Financial</option>
+							<option value="4">Victimless</option>
+							<option value="5">Other (Non-Criminal/Non-Violent)</option>
+						</select>
+
+						<script>
+						var types = {
+							"Personal/Violent":true,
+							"Property":true,
+							"White-Collar/Financial":true,
+							"Victimless":true,
+							"Other (Non-Criminal/Non-Violent)":true,
+						};
+						var typesKeys =  Object.keys(types);
+						$(document).ready(function(){
+							$("#category").multipleSelect({
+								allSelected: "All Crime Categories Selected",
+								width: 350,
+								minimumCountSelected: 7, 
+								onCheckAll: function(view) {
+									for(var i = 0; i <typesKeys.length; i++){
+										types[typesKeys[i]] = true;
+									}
+									if(data) query();
+								},
+								onUncheckAll: function(view) {
+									for(var i = 0; i <typesKeys.length; i++){
+										types[typesKeys[i]] = false;
+									}
+									query();																
+								},
+								onClick: function(view) {
+									if(view.checked){
+										types[typesKeys[view.value - 1]] = true;
+									} else {
+										types[typesKeys[view.value - 1]] = false;
+									}
+									query();
+								}
+							});
+							$("#category").multipleSelect('checkAll');
+						});
+						</script>
+						<!-- http://wenzhixin.net.cn/p/multiple-select/docs/#documentation -->
+					</div>
+
+
+					<!-- Resolution -->
+					<div id="filter">
+						<h3>Resolution of Crime</h3>
+						<select multiple="multiple" id="resolution">
+							<option value="101">Arrest</option>
+							<option value="102">Juvenile Related</option>
+							<option value="103">None</option>
+							<option value="104">Not Prosecuted/Unfounded</option>
+							<option value="105">Other</option>		
+						</select>
+
+						<script>
+						var groups= {
+							"Arrest":true,
+							"Juvenile Related":true,
+							"None":true,
+							"Not Prosecuted/Unfounded":true,
+							"Other":true,
+						};
+						var groupsKeys =  Object.keys(groups);
+						$(document).ready(function(){
+							$("#resolution").multipleSelect({
+								allSelected: "All Crime Resolutions Selected",
+								width: 350,
+								minimumCountSelected: 7, 
+								onCheckAll: function(view) {
+									for(var i = 0; i <groupsKeys.length; i++){
+										groups[groupsKeys[i]] = true;
+									}
+									if(data) query();
+								},
+								onUncheckAll: function(view) {
+									for(var i = 0; i <groupsKeys.length; i++){
+										groups[groupsKeys[i]] = false;
+									}
+									query();																
+								},
+								onClick: function(view) {
+									if(view.checked){
+										groups[groupsKeys[view.value - 101]] = true;
+									} else {
+										groups[groupsKeys[view.value - 101]] = false;
+									}
+									query();
+								}
+							});
+							$("#resolution").multipleSelect('checkAll');
+						});
+						</script>
+						<!-- http://wenzhixin.net.cn/p/multiple-select/docs/#documentation -->
+					</div>
+
+
+					<!-- Day of the Week -->
+					<div id="filter">
+						<h3>Day of the Week</h3>
+						<select multiple="multiple" id="dow">
+							<option value="201">M</option>
+							<option value="202">Tu</option>
+							<option value="203">W</option>
+							<option value="204">Th</option>
+							<option value="205">F</option>
+							<option value="206">Sa</option>
+							<option value="207">Su</option>
+						</select>
+						<script>
+						var days = {
+							Monday:true,
+							Tuesday:true,
+							Wednesday:true,
+							Thursday:true,
+							Friday:true,
+							Saturday:true,
+							Sunday:true,
+						};
+						var daysKeys =  Object.keys(days);
+						$(document).ready(function(){
+							$("#dow").multipleSelect({
+								allSelected: "All Days of the Week Selected",
+								width: 350,
+								multiple: true,
+								multipleWidth: 45,
+								minimumCountSelected: 7,
+								onCheckAll: function(view) {
+									for(var i = 0; i <daysKeys.length; i++){
+										days[daysKeys[i]] = true;
+									}
+									if(data) query();
+								},
+								onUncheckAll: function(view) {
+									for(var i = 0; i <daysKeys.length; i++){
+										days[daysKeys[i]] = false;
+									}
+									query();																
+								},
+								onClick: function(view) {
+									if(view.checked){
+										days[daysKeys[view.value - 201]] = true;
+									} else {
+										days[daysKeys[view.value - 201]] = false;
+									}
+									query();
+								}
+							});
+							$("#dow").multipleSelect('checkAll');
+						});
+						</script>
+						<!-- http://wenzhixin.net.cn/p/multiple-select/docs/#documentation -->
+					</div>
+
+
+					<!-- Time of Day -->
+					<div id="filter">
+						<h3>Time of Day</h3>
+						<p id="todRange">
+							From <input type="text" class="time start" id="time" placeholder="12:00am"/> to <input type="text" class="time end" id="time" placeholder="12:00am"/>
+						</p>
+
+						<script>
+						var startTime;
+						var endTime;
+						$('#todRange .time').timepicker({
+							'timeFormat': 'g:ia',
+							'step': 15
+						});
+						$('#todRange').datepair();
+						$('#todRange').on('changeTime', function(){
+							startTime = $('.time.start').val();
+							endTime = $('.time.end').val();
+							query();
+						})
+						</script>
+						<!-- https://github.com/jonthornton/jquery-timepicker -->
+
+					</div>
+
+					<div id="spacer"></div>
+
+					<div id="button">
+						<button type="reset" id="reset" class="reset" value="Reset">Reset</button>
+						<script>
+							document.getElementById("reset").onclick = function() {resetFn()};
+							function resetFn() {
+								$("#sliderA").slider({value: 2.5});
+								$("#sliderB").slider({value: 2.5});
+								$("#sliderA-radius").val(2.5);
+								$("#sliderB-radius").val(2.5);
+								$("#category").multipleSelect('checkAll');
+								$("#resolution").multipleSelect('checkAll');
+								$("#dow").multipleSelect('checkAll');
+								var d = new Date();
+								d.setHours(0, 0, 0, 0);
+								$('#todRange .time').timepicker('setTime',d);
+								reset();
+							}
+						</script>
+					</div>
+
+				</div>
+
+			</div>
+
+			<div id="main-content">
+				<div id="map"> </div>
+			</div>
+
+		
+	</div>
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="http://d3js.org/topojson.v1.min.js"></script>	
+	<script src="main.js"></script>
+
+</body>
+</html>
